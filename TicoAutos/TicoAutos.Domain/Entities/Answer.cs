@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TicoAutos.Domain.Entities;
 
-namespace TicoAutos.Domain.Entities
+public class Answer
 {
-    internal class Answer
-    {
-    }
+    public int Id { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Relationship with Question
+    public int QuestionId { get; set; }
+    public Question Question { get; set; } = null!;
 }
