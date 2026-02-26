@@ -11,6 +11,10 @@
 ## Introduction
 Project for Software Engineering. TicoAutos is a professional-grade web platform for vehicle commerce, built with a decoupled architecture focusing on scalability and clean code standards.
 
+##  Documentation
+Official project documentation and requirements can be found in the `/docs` folder:
+- [ Project Documentation- TicoAutos](./docs/ProyectoTicoAutos.pdf)
+
 ##  Architectural Vision: Clean Architecture
 This project strictly follows the **Onion Architecture** pattern to decouple business logic from external frameworks:
 
