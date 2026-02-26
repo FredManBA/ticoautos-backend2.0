@@ -1,0 +1,6 @@
+@TicoAutos.WebApi_HostAddress = http://localhost:5105
+
+GET {{TicoAutos.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
