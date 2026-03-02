@@ -9,6 +9,7 @@ public interface IVehicleRepository
 {
     Task<IEnumerable<Vehicle>> GetAllAsync();
     Task<Vehicle?> GetByIdAsync(int id);
+    IQueryable<Vehicle> GetQueryable();
     Task AddAsync(Vehicle vehicle);
     void Update(Vehicle vehicle);
     void Delete(Vehicle vehicle);
