@@ -43,6 +43,8 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         modelBuilder.Entity<Vehicle>()
             .Property(v => v.Price)
             .HasPrecision(18, 2);

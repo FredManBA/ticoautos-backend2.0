@@ -1,9 +1,13 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using TicoAutos.Application.Validators.Vehicles;
 using TicoAutos.Domain.Interfaces;
 using TicoAutos.Infrastructure;
-
+using TicoAutos.Application.Mappings;
 
 
 
@@ -23,7 +27,15 @@ builder.Services.AddSwaggerGen();
 // Dependency Injection
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// FluentValidation Configuration
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateVehicleValidator>();
 
+// AutoMapper Configuration
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<MappingProfile>();
+}, typeof(MappingProfile).Assembly);
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(opt => {
