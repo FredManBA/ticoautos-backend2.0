@@ -19,5 +19,6 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.Questions, opt => opt.Ignore())
             .ForMember(dest => dest.IsSold, opt => opt.MapFrom(src => false));
+        CreateMap<UpdateVehicleRequest, Vehicle>();
     }
 }
