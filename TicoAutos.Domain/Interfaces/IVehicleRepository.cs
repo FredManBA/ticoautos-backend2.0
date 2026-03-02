@@ -2,6 +2,9 @@
 
 namespace TicoAutos.Domain.Interfaces;
 
+/// <summary>
+/// Contract for the Vehicle repository, defining the operations for managing vehicle entities
+/// </summary>
 public interface IVehicleRepository
 {
     Task<IEnumerable<Vehicle>> GetAllAsync();

@@ -1,5 +1,9 @@
 ﻿using TicoAutos.Domain.Entities;
 
+
+/// <summary>
+/// Identifies an answer provided by a seller in response to a question asked by a potential buyer about a specific vehicle, encapsulating its properties and relationships within the domain model of the TicoAutos application.
+/// </summary>
 public class Answer
 {
     public int Id { get; set; }
