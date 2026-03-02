@@ -14,6 +14,10 @@ public class VehicleRepository : IVehicleRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Methods for CRUD operations on Vehicle entity (get all, get by id, add, update, delete).
+    /// </summary>
+    /// <returns></returns>
     public async Task<IEnumerable<Vehicle>> GetAllAsync() =>
         await _context.Vehicles.ToListAsync();
 

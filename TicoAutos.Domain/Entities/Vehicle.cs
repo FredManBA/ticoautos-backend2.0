@@ -1,5 +1,9 @@
 ﻿namespace TicoAutos.Domain.Entities;
 
+
+/// <summary>
+/// Identifies a vehicle available for sale, encapsulating its properties and relationships within the domain model of the TicoAutos application.
+/// </summary>
 public class Vehicle
 {
     public int Id { get; set; }
