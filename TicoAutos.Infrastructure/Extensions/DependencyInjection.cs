@@ -27,7 +27,6 @@ public static class DependencyInjection
 
         // Register repositories and services for dependency injection
         services.AddScoped<IIdentityService, IdentityService>();
-        services.AddScoped<IVehicleRepository, VehicleRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;

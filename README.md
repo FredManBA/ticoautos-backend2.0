@@ -22,7 +22,54 @@ This project strictly follows the **Onion Architecture** pattern to decouple bus
 * **TicoAutos.Application:** Use cases, DTOs, Mapping profiles, and Service Interfaces.
 * **TicoAutos.Infrastructure:** Data access (EF Core), Unit of Work, and Security (JWT).
 * **TicoAutos.WebApi:** Controllers, Middlewares, and API Configuration.
+---
+## Project Structure (Solution Tree)
 
+```
+TicoAutos/
+├── src/
+│   ├── TicoAutos.Domain/                # Core Layer: Entities & Contracts
+│   │   ├── Common/
+│   │   │   └── BaseEntity.cs            # Shared logic (Id, CreatedAt)
+│   │   ├── Entities/
+│   │   │   ├── Vehicle.cs               # Inherits from BaseEntity
+│   │   │   ├── Question.cs
+│   │   │   └── Answer.cs
+│   │   └── Interfaces/
+│   │       ├── IUnitOfWork.cs           # Transaction orchestrator
+│   │       ├── IVehicleRepository.cs
+│   │       └── IIdentityService.cs
+│   │
+│   ├── TicoAutos.Application/           # Logic Layer: DTOs & Validation
+│   │   ├── DTOs/
+│   │   │   ├── Identity/                # Auth Requests/Responses
+│   │   │   └── Vehicles/                # Vehicle CRUD DTOs
+│   │   ├── Mappings/
+│   │   │   └── MappingProfile.cs        # AutoMapper configurations
+│   │   ├── Validators/
+│   │   │   └── Vehicles/                # FluentValidation rules
+│   │   └── Extensions/
+│   │       └── DependencyInjection.cs   # Application service registration
+│   │
+│   ├── TicoAutos.Infrastructure/        # External Layer: DB & Identity
+│   │   ├── Persistence/
+│   │   │   ├── ApplicationDbContext.cs
+│   │   │   └── Configurations/          # Fluent API table mappings
+│   │   ├── Repositories/
+│   │   │   ├── UnitOfWork.cs            # Pattern implementation
+│   │   │   └── VehicleRepository.cs
+│   │   ├── Identity/
+│   │   │   └── IdentityService.cs       # JWT & Auth implementation
+│   │   ├── Migrations/                  # EF Core versioning
+│   │   └── Extensions/
+│   │       └── DependencyInjection.cs   # Infrastructure service registration
+│   │
+│   └── TicoAutos.WebApi/                # Interface Layer: API Entry Point
+│       ├── Controllers/
+│       │   └── AuthController.cs        # Auth endpoints
+│       ├── Program.cs                   # App & DI call
+│       └── appsettings.json             # DB Connection & JWT Keys
+```
 ---
 
 ##  Tech Stack & Patterns
