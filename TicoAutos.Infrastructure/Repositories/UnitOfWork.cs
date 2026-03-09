@@ -14,6 +14,7 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;
     private IVehicleRepository? _vehicles;
+    private IUserRepository? _users;
 
     /// <summary>
     /// Initializes a new instance of the UnitOfWork with the specified database context.
@@ -29,6 +30,12 @@ public class UnitOfWork : IUnitOfWork
     /// ensuring that the repository is created only when first requested.
     /// </summary>
     public IVehicleRepository Vehicles => _vehicles ??= new VehicleRepository(_context);
+
+
+    /// <summary>
+    /// Provides access to the user repository using lazy initialization,
+    /// </summary>
+    public IUserRepository Users => _users ??= new UserRepository(_context);
 
     /// <summary>
     /// Asynchronously commits all pending changes tracked by the context to the database

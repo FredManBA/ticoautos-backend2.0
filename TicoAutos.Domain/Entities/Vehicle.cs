@@ -18,6 +18,9 @@ public class Vehicle : BaseEntity
     public string OwnerId { get; set; } = string.Empty;
     public string OwnerName { get; set; } = string.Empty;
 
-    // Relationship: A vehicle can have many questions
+    // Owner relationship
+    public int OwnerId { get; set; }
+    public User Owner { get; set; } = null!;
+
     public ICollection<Question> Questions { get; set; } = new List<Question>();
 }
