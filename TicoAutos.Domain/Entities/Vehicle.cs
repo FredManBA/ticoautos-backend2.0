@@ -15,6 +15,8 @@ public class Vehicle : BaseEntity
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public bool IsSold { get; set; } = false;
+    public string OwnerId { get; set; } = string.Empty;
+    public string OwnerName { get; set; } = string.Empty;
 
     // Relationship: A vehicle can have many questions
     public ICollection<Question> Questions { get; set; } = new List<Question>();
