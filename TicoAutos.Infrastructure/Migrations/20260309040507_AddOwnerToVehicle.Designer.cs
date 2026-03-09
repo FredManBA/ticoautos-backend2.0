@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TicoAutos.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using TicoAutos.Infrastructure.Persistence;
 namespace TicoAutos.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260309040507_AddOwnerToVehicle")]
+    partial class AddOwnerToVehicle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,34 +74,6 @@ namespace TicoAutos.Infrastructure.Migrations
                     b.HasIndex("VehicleId");
 
                     b.ToTable("Questions");
-                });
-
-            modelBuilder.Entity("TicoAutos.Domain.Entities.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("TicoAutos.Domain.Entities.Vehicle", b =>
@@ -175,25 +150,9 @@ namespace TicoAutos.Infrastructure.Migrations
                     b.Navigation("Vehicle");
                 });
 
-            modelBuilder.Entity("TicoAutos.Domain.Entities.Vehicle", b =>
-                {
-                    b.HasOne("TicoAutos.Domain.Entities.User", "Owner")
-                        .WithMany("Vehicles")
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Owner");
-                });
-
             modelBuilder.Entity("TicoAutos.Domain.Entities.Question", b =>
                 {
                     b.Navigation("Answer");
-                });
-
-            modelBuilder.Entity("TicoAutos.Domain.Entities.User", b =>
-                {
-                    b.Navigation("Vehicles");
                 });
 
             modelBuilder.Entity("TicoAutos.Domain.Entities.Vehicle", b =>

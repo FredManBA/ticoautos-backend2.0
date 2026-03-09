@@ -8,6 +8,7 @@ using TicoAutos.Application.Validators.Vehicles;
 using TicoAutos.Domain.Interfaces;
 using TicoAutos.Infrastructure;
 using TicoAutos.Application.Mappings;
+using TicoAutos.WebApi.Extensions;
 
 
 
@@ -22,7 +23,7 @@ var key = Encoding.UTF8.GetBytes(secretKey);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerWithJwt();
 
 // Dependency Injection
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -56,7 +57,25 @@ builder.Services.AddAuthentication(opt => {
 });
 
 builder.Services.AddAuthorization();
+
+
+// Configuration for CORS to allow requests from the Angular development server
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularDev",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200") 
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
+
+
+app.UseCors("AllowAngularDev");       
+app.UseHttpsRedirection();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
@@ -64,11 +83,7 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
