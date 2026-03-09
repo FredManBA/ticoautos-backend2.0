@@ -8,7 +8,7 @@ namespace TicoAutos.WebApi.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IIdentityService _identityService;
+    private readonly IIdentityService _identityService;                                                                             
 
     public AuthController(IIdentityService identityService)
     {
@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
         if (request.Email == "admin@ticoautos.com" && request.Password == "P@ssword123")
         {
             var token = _identityService.GenerateToken(request.Email, Guid.NewGuid().ToString());
-            return Ok(new { Token = token });
+            return Ok(new { token = token });
         }
 
         return Unauthorized("Credenciales inválidas");

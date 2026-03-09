@@ -13,12 +13,16 @@ public class MappingProfile : Profile
         CreateMap<Vehicle, VehicleResponseDto>();
 
 
-        /// DTO to Entity for Create (Para el POST/Creación)
+        /// DTO to Entity for Create (POST/Create)
         CreateMap<CreateVehicleRequest, Vehicle>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.Questions, opt => opt.Ignore())
             .ForMember(dest => dest.IsSold, opt => opt.MapFrom(src => false));
-        CreateMap<UpdateVehicleRequest, Vehicle>();
+
+        // / DTO to Entity for Update (PUT/actualization)
+        CreateMap<UpdateVehicleRequest, Vehicle>()
+             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+             .ForMember(dest => dest.Questions, opt => opt.Ignore());
     }
 }
