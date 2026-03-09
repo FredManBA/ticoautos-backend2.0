@@ -15,22 +15,34 @@ public class AuthController : ControllerBase
         _identityService = identityService;
     }
 
+    /// <summary>
+    /// Authenticates a user and returns a JWT token.
+    /// POST /api/auth/login
+    /// </summary>
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        var (success, token, error) = await _identityService.LoginAsync(request.Email, request.Password);
+
+        if (!success)
+            return Unauthorized(new { message = error });
+
+        return Ok(new AuthResponse(token, request.Email, string.Empty));
+    }
 
     /// <summary>
-    /// Method to authenticate a user and generate a JWT token. In a real application, this would validate the user's credentials against a database and return a token if valid.
+    /// Registers a new user and returns a JWT token.
+    /// POST /api/auth/register
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        // Simulation: In a real application, you would validate the user's credentials against a database or an identity provider.
-        if (request.Email == "admin@ticoautos.com" && request.Password == "P@ssword123")
-        {
-            var token = _identityService.GenerateToken(request.Email, Guid.NewGuid().ToString());
-            return Ok(new { Token = token });
-        }
+        var (success, token, error) = await _identityService.RegisterAsync(
+            request.Email, request.Password, request.FullName);
 
-        return Unauthorized("Credenciales inválidas");
+        if (!success)
+            return BadRequest(new { message = error });
+
+        return Ok(new AuthResponse(token, request.Email, request.FullName));
     }
 }

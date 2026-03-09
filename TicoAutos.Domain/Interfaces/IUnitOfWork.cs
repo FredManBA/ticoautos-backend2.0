@@ -17,5 +17,6 @@ public interface IUnitOfWork : IDisposable
 {
 
     IVehicleRepository Vehicles { get; }
+    IUserRepository Users { get; }
     Task<int> SaveChangesAsync();
 }   

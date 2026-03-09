@@ -26,6 +26,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 
     /// <summary>
+    /// Gets the database set for user entities, enabling CRUD operations and user management.
+    /// </summary>
+    public DbSet<User> Users => Set<User>();
+
+    /// <summary>
     /// Gets the database set for question entities.
     /// </summary>
     public DbSet<Question> Questions => Set<Question>();
