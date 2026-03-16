@@ -29,9 +29,9 @@ public class VehiclesController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetAll([FromQuery] VehicleFilterRequest filter)
     {
-        var query = _unitOfWork.Vehicles.GetQueryable();
+        IQueryable<Vehicle> query = _unitOfWork.Vehicles.GetQueryable()
+            .Include(v => v.Owner);
 
-        // Filtering at database level
         if (!string.IsNullOrWhiteSpace(filter.Brand))
             query = query.Where(v => v.Brand.ToLower().Contains(filter.Brand.ToLower()));
 
@@ -80,9 +80,11 @@ public class VehiclesController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetById(int id)
     {
-        var vehicle = await _unitOfWork.Vehicles.GetByIdAsync(id);
-        if (vehicle is null) return NotFound();
+        var vehicle = await _unitOfWork.Vehicles.GetQueryable()
+            .Include(v => v.Owner)
+            .FirstOrDefaultAsync(v => v.Id == id);
 
+        if (vehicle is null) return NotFound();
         return Ok(_mapper.Map<VehicleResponseDto>(vehicle));
     }
 
@@ -162,5 +164,26 @@ public class VehiclesController : ControllerBase
         await _unitOfWork.SaveChangesAsync();
 
         return Ok(_mapper.Map<VehicleResponseDto>(vehicle));
+    }
+
+    /// <summary>
+    /// Returns vehicles owned by the authenticated user.
+    /// GET /api/vehicles/my
+    /// </summary>
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<IActionResult> GetMine()
+    {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (userIdClaim is null || !int.TryParse(userIdClaim, out int userId))
+            return Unauthorized();
+
+        var vehicles = await _unitOfWork.Vehicles.GetQueryable()
+       .Include(v => v.Owner)
+       .Where(v => v.OwnerId == userId)
+       .OrderByDescending(v => v.CreatedAt)
+       .ToListAsync();
+
+        return Ok(_mapper.Map<IEnumerable<VehicleResponseDto>>(vehicles));
     }
 }
