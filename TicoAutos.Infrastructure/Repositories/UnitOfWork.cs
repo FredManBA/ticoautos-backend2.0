@@ -15,6 +15,8 @@ public class UnitOfWork : IUnitOfWork
     private readonly ApplicationDbContext _context;
     private IVehicleRepository? _vehicles;
     private IUserRepository? _users;
+    private IQuestionRepository? _questions;
+    private IAnswerRepository? _answers;
 
     /// <summary>
     /// Initializes a new instance of the UnitOfWork with the specified database context.
@@ -49,6 +51,18 @@ public class UnitOfWork : IUnitOfWork
     {
         return await _context.SaveChangesAsync();
     }
+
+    /// <summary>
+    /// Gets the repository used to access and manage questions in the data store.
+    /// </summary>
+    public IQuestionRepository Questions => _questions ??= new QuestionRepository(_context);
+
+    /// <summary>
+    /// Gets the repository used to access and manage answer entities in the data store.
+    /// </summary>
+    /// <remarks>The returned repository provides methods for querying, adding, updating, and deleting
+    /// answers. The same repository instance is returned for each access to this property.</remarks>
+    public IAnswerRepository Answers => _answers ??= new AnswerRepository(_context);
 
     /// <summary>
     /// Releases the database context resources used by the Unit of Work.

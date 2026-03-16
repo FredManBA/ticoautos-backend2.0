@@ -94,7 +94,14 @@ public class VehiclesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateVehicleRequest request)
     {
+        // Extraer el userId del JWT claim
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (userIdClaim is null || !int.TryParse(userIdClaim, out int userId))
+            return Unauthorized(new { message = "Token inválido." });
+
         var vehicle = _mapper.Map<Vehicle>(request);
+        vehicle.OwnerId = userId;
+
         await _unitOfWork.Vehicles.AddAsync(vehicle);
         await _unitOfWork.SaveChangesAsync();
 

@@ -10,7 +10,8 @@ public class Question
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int VehicleId { get; set; }
     public Vehicle Vehicle { get; set; } = null!;
+    public int AskerId { get; set; }
+    public User Asker { get; set; } = null!;
 
-    // One Question has one Answer (Optional)
     public Answer? Answer { get; set; }
 }

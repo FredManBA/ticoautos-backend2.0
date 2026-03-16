@@ -15,8 +15,9 @@
 /// </summary>
 public interface IUnitOfWork : IDisposable
 {
-
     IVehicleRepository Vehicles { get; }
     IUserRepository Users { get; }
+    IQuestionRepository Questions { get; }
+    IAnswerRepository Answers { get; }
     Task<int> SaveChangesAsync();
-}   
+}

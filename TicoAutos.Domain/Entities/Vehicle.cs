@@ -1,11 +1,8 @@
-﻿using TicoAutos.Domain.Common;
+﻿// TicoAutos.Domain/Entities/Vehicle.cs
+using TicoAutos.Domain.Common;
 
 namespace TicoAutos.Domain.Entities;
 
-/// <summary>
-/// Identifies a vehicle available for sale, encapsulating its properties 
-/// and relationships within the domain model.
-/// </summary>
 public class Vehicle : BaseEntity
 {
     public string Brand { get; set; } = string.Empty;
@@ -15,10 +12,8 @@ public class Vehicle : BaseEntity
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public bool IsSold { get; set; } = false;
-    public string OwnerId { get; set; } = string.Empty;
-    public string OwnerName { get; set; } = string.Empty;
 
-    // Owner relationship
+    // Owner relationship (FK)
     public int OwnerId { get; set; }
     public User Owner { get; set; } = null!;
 
