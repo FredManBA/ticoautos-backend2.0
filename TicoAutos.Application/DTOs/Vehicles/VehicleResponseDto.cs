@@ -2,19 +2,20 @@
 
 /// <summary>
 /// DTO for transferring vehicle data from the application layer to the presentation layer,
-/// encapsulating the properties of a vehicle in a format suitable for API responses,
 /// following Clean Architecture principles.
 /// </summary>
-public record VehicleResponseDto(
-    int Id,
-    string Brand,
-    string Model,
-    int Year,
-    decimal Price,
-    string Description,
-    string ImageUrl,
-    bool IsSold,
-    DateTime CreatedAt,
-    int OwnerId,
-    string OwnerName
-);
+public class VehicleResponseDto
+{
+    public int Id { get; set; }
+    public string Brand { get; set; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
+    public int Year { get; set; }   
+    public decimal Price { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
+    public bool IsSold { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int OwnerId { get; set; }
+    public string OwnerName { get; set; } = string.Empty;
+    public int UnansweredQuestions { get; set; }
+}

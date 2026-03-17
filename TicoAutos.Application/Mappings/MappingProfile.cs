@@ -8,10 +8,12 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        /// Entity to DTO (GET/Response)
+        /// Entity to DTO (GET/Response))
         CreateMap<Vehicle, VehicleResponseDto>()
-            .ForMember(dest => dest.OwnerName,
-                opt => opt.MapFrom(src => src.Owner != null ? src.Owner.Name : "Vendedor"));
+        .ForMember(dest => dest.OwnerName,
+             opt => opt.MapFrom(src => src.Owner != null ? src.Owner.Name : "Vendedor"))
+                 .ForMember(dest => dest.UnansweredQuestions,
+                    opt => opt.MapFrom(src => src.Questions.Count(q => q.Answer == null)));
 
         /// DTO to Entity for Create (POST)
         CreateMap<CreateVehicleRequest, Vehicle>()

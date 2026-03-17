@@ -179,10 +179,12 @@ public class VehiclesController : ControllerBase
             return Unauthorized();
 
         var vehicles = await _unitOfWork.Vehicles.GetQueryable()
-       .Include(v => v.Owner)
-       .Where(v => v.OwnerId == userId)
-       .OrderByDescending(v => v.CreatedAt)
-       .ToListAsync();
+            .Include(v => v.Owner)
+            .Include(v => v.Questions)
+                .ThenInclude(q => q.Answer)
+            .Where(v => v.OwnerId == userId)
+            .OrderByDescending(v => v.CreatedAt)
+            .ToListAsync();
 
         return Ok(_mapper.Map<IEnumerable<VehicleResponseDto>>(vehicles));
     }
