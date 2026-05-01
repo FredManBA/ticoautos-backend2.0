@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TicoAutos.Infrastructure.Migrations
 {
-    /// <inheritdoc />
     public partial class AddUserEntityAndOwner : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
@@ -29,7 +27,6 @@ namespace TicoAutos.Infrastructure.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");
 
-    
 
             migrationBuilder.CreateTable(
                 name: "Users",
@@ -61,19 +58,22 @@ namespace TicoAutos.Infrastructure.Migrations
                 onDelete: ReferentialAction.Cascade);
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_Vehicles_Users_OwnerId",
                 table: "Vehicles");
 
-            migrationBuilder.DropTable(
-                name: "Users");
-
             migrationBuilder.DropIndex(
                 name: "IX_Vehicles_OwnerId",
                 table: "Vehicles");
+
+            migrationBuilder.DropColumn(
+                name: "OwnerId",
+                table: "Vehicles");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Model",

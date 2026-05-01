@@ -79,10 +79,6 @@ namespace TicoAutos.Infrastructure.Migrations
                 column: "QuestionId",
                 unique: true);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Questions_VehicleId",
-                table: "Questions",
-                column: "VehicleId");
         }
 
         /// <inheritdoc />
