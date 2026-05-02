@@ -32,6 +32,11 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(baseUrl);
         });
 
+        services.AddHttpClient<IEmailSender, SendGridEmailSender>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.sendgrid.com/v3/");
+        });
+
         // Register repositories and services for dependency injection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();

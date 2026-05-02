@@ -8,6 +8,7 @@ namespace TicoAutos.Domain.Interfaces;
 public interface IUserRepository
 {
     Task<User?> GetByEmailAsync(string email);
+    Task<User?> GetByEmailVerificationTokenAsync(string token);
     Task<bool> ExistsAsync(string email);
     Task<bool> ExistsByCedulaAsync(string cedula);
     Task AddAsync(User user);

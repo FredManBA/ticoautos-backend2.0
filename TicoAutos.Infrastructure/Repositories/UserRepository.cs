@@ -20,6 +20,9 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByEmailAsync(string email) =>
         await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
+    public async Task<User?> GetByEmailVerificationTokenAsync(string token) =>
+        await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == token);
+
     public async Task<bool> ExistsAsync(string email) =>
         await _context.Users.AnyAsync(u => u.Email == email);
 

@@ -19,11 +19,26 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Cedula)
             .HasMaxLength(9);
 
+        builder.Property(u => u.AccountStatus)
+            .HasMaxLength(40)
+            .HasDefaultValue("Active")
+            .IsRequired();
+
+        builder.Property(u => u.IsEmailVerified)
+            .HasDefaultValue(true);
+
+        builder.Property(u => u.EmailVerificationToken)
+            .HasMaxLength(128);
+
         builder.HasIndex(u => u.Email)
             .IsUnique();
 
         builder.HasIndex(u => u.Cedula)
             .IsUnique()
             .HasFilter("[Cedula] IS NOT NULL");
+
+        builder.HasIndex(u => u.EmailVerificationToken)
+            .IsUnique()
+            .HasFilter("[EmailVerificationToken] IS NOT NULL");
     }
 }

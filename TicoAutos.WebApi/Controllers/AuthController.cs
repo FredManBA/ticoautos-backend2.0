@@ -1,4 +1,4 @@
-﻿// TicoAutos.WebApi/Controllers/AuthController.cs
+// TicoAutos.WebApi/Controllers/AuthController.cs
 using Microsoft.AspNetCore.Mvc;
 using TicoAutos.Application.DTOs;
 using TicoAutos.Domain.Interfaces;
@@ -17,7 +17,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Authenticates a user and returns a JWT token.
+    /// Authenticates a verified user and returns a JWT token.
     /// POST /api/auth/login
     /// </summary>
     [HttpPost("login")]
@@ -32,18 +32,38 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Registers a new user and returns a JWT token.
+    /// Registers a new pending user and sends an email verification link.
     /// POST /api/auth/register
     /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var (success, userId, token, fullName, error) = await _identityService.RegisterAsync(
+        var (success, userId, fullName, error) = await _identityService.RegisterAsync(
             request.Email, request.Password, request.Cedula);
 
         if (!success)
             return Conflict(new { message = error });
 
-        return Ok(new UserResponseDto(userId, fullName, request.Email, token));
+        return Ok(new RegistrationResponse(
+            userId,
+            fullName,
+            request.Email,
+            "Pending",
+            "Usuario registrado. Revise su correo para activar la cuenta."));
+    }
+
+    /// <summary>
+    /// Activates a pending user account with the email verification token.
+    /// GET /api/auth/verify-email?token=...
+    /// </summary>
+    [HttpGet("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+    {
+        var (success, error) = await _identityService.VerifyEmailAsync(token);
+
+        if (!success)
+            return BadRequest(new { message = error });
+
+        return Ok(new { message = "Cuenta verificada correctamente." });
     }
 }
