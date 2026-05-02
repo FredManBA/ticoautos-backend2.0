@@ -33,6 +33,12 @@ public class QuestionsController : ControllerBase
         var vehicle = await _unitOfWork.Vehicles.GetByIdAsync(vehicleId);
         if (vehicle is null) return NotFound(new { message = "Vehículo no encontrado." });
 
+        if (vehicle.OwnerId == userId)
+            return BadRequest(new { message = "No puede realizar preguntas en su propio vehículo." });
+
+        if (vehicle.IsSold)
+            return Conflict(new { message = "No se pueden realizar preguntas en vehículos vendidos." });
+
         var question = new Question
         {
             Content = request.Content,
@@ -82,6 +88,57 @@ public class QuestionsController : ControllerBase
     }
 
     /// <summary>
+    /// Get questions asked by the authenticated user.
+    /// GET /api/questions/my
+    /// </summary>
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<IActionResult> GetMyQuestions()
+    {
+        if (!TryGetAuthenticatedUserId(out var userId))
+            return Unauthorized(new { message = "Token inválido." });
+
+        var questions = await _unitOfWork.Questions.GetByAskerIdAsync(userId);
+        return Ok(MapQuestionResponses(questions));
+    }
+
+    /// <summary>
+    /// Get all questions associated with vehicles owned by the authenticated user.
+    /// GET /api/questions/inbox
+    /// </summary>
+    [HttpGet("inbox")]
+    [Authorize]
+    public async Task<IActionResult> GetInbox()
+    {
+        if (!TryGetAuthenticatedUserId(out var userId))
+            return Unauthorized(new { message = "Token inválido." });
+
+        var questions = await _unitOfWork.Questions.GetByOwnerIdAsync(userId);
+        return Ok(MapQuestionResponses(questions));
+    }
+
+    /// <summary>
+    /// Get the question history for one vehicle owned by the authenticated user.
+    /// GET /api/questions/vehicle/{vehicleId}/owner
+    /// </summary>
+    [HttpGet("vehicle/{vehicleId}/owner")]
+    [Authorize]
+    public async Task<IActionResult> GetOwnerVehicleHistory(int vehicleId)
+    {
+        if (!TryGetAuthenticatedUserId(out var userId))
+            return Unauthorized(new { message = "Token inválido." });
+
+        var vehicle = await _unitOfWork.Vehicles.GetByIdAsync(vehicleId);
+        if (vehicle is null) return NotFound(new { message = "Vehículo no encontrado." });
+
+        if (vehicle.OwnerId != userId)
+            return Forbid();
+
+        var questions = await _unitOfWork.Questions.GetByVehicleIdForOwnerAsync(vehicleId, userId);
+        return Ok(MapQuestionResponses(questions));
+    }
+
+    /// <summary>
     /// Get all questions for a vehicle with their answers.
     /// GET /api/questions/vehicle/{vehicleId}
     /// </summary>
@@ -91,7 +148,12 @@ public class QuestionsController : ControllerBase
     {
         var questions = await _unitOfWork.Questions.GetByVehicleIdAsync(vehicleId);
 
-        var result = questions.Select(q => new QuestionResponseDto
+        return Ok(MapQuestionResponses(questions));
+    }
+
+    private static IEnumerable<QuestionResponseDto> MapQuestionResponses(IEnumerable<Question> questions)
+    {
+        return questions.Select(q => new QuestionResponseDto
         {
             Id = q.Id,
             Content = q.Content,
@@ -106,7 +168,11 @@ public class QuestionsController : ControllerBase
                 CreatedAt = q.Answer.CreatedAt
             }
         });
+    }
 
-        return Ok(result);
+    private bool TryGetAuthenticatedUserId(out int userId)
+    {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        return int.TryParse(userIdClaim, out userId);
     }
 }

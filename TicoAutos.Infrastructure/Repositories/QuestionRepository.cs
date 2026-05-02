@@ -51,4 +51,31 @@ public class QuestionRepository : IQuestionRepository
             .Where(q => q.VehicleId == vehicleId)
             .OrderBy(q => q.CreatedAt)
             .ToListAsync();
+
+    public async Task<IEnumerable<Question>> GetByAskerIdAsync(int askerId) =>
+        await _context.Questions
+            .Include(q => q.Vehicle)
+                .ThenInclude(v => v.Owner)
+            .Include(q => q.Answer)
+            .Where(q => q.AskerId == askerId)
+            .OrderByDescending(q => q.CreatedAt)
+            .ToListAsync();
+
+    public async Task<IEnumerable<Question>> GetByOwnerIdAsync(int ownerId) =>
+        await _context.Questions
+            .Include(q => q.Asker)
+            .Include(q => q.Vehicle)
+            .Include(q => q.Answer)
+            .Where(q => q.Vehicle.OwnerId == ownerId)
+            .OrderByDescending(q => q.CreatedAt)
+            .ToListAsync();
+
+    public async Task<IEnumerable<Question>> GetByVehicleIdForOwnerAsync(int vehicleId, int ownerId) =>
+        await _context.Questions
+            .Include(q => q.Asker)
+            .Include(q => q.Vehicle)
+            .Include(q => q.Answer)
+            .Where(q => q.VehicleId == vehicleId && q.Vehicle.OwnerId == ownerId)
+            .OrderBy(q => q.CreatedAt)
+            .ToListAsync();
 }

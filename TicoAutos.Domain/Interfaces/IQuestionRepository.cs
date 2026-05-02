@@ -10,4 +10,7 @@ public interface IQuestionRepository
     Task AddAsync(Question question);
     Task<Question?> GetByIdWithVehicleAsync(int id);
     Task<IEnumerable<Question>> GetByVehicleIdAsync(int vehicleId);
+    Task<IEnumerable<Question>> GetByAskerIdAsync(int askerId);
+    Task<IEnumerable<Question>> GetByOwnerIdAsync(int ownerId);
+    Task<IEnumerable<Question>> GetByVehicleIdForOwnerAsync(int vehicleId, int ownerId);
 }

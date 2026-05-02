@@ -1,5 +1,6 @@
 // TicoAutos.WebApi/Controllers/AuthController.cs
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using TicoAutos.Application.DTOs;
 using TicoAutos.Domain.Interfaces;
 
@@ -65,5 +66,26 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = error });
 
         return Ok(new { message = "Cuenta verificada correctamente." });
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> Me([FromServices] IUnitOfWork unitOfWork)
+    {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (userIdClaim is null || !int.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Token inválido." });
+
+        var user = await unitOfWork.Users.GetByIdAsync(userId);
+        if (user is null)
+            return NotFound(new { message = "Usuario no encontrado." });
+
+        return Ok(new CurrentUserResponse(
+            user.Id,
+            user.Name,
+            user.Email,
+            user.Cedula,
+            user.AccountStatus,
+            user.IsEmailVerified));
     }
 }
