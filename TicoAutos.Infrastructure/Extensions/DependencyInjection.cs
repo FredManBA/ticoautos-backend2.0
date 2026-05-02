@@ -24,6 +24,13 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddHttpClient<ICedulaValidationService, CedulaValidationService>(client =>
+        {
+            var baseUrl = configuration["CedulaValidation:BaseUrl"]
+                ?? throw new InvalidOperationException("CedulaValidation:BaseUrl is missing.");
+
+            client.BaseAddress = new Uri(baseUrl);
+        });
 
         // Register repositories and services for dependency injection
         services.AddScoped<IIdentityService, IdentityService>();

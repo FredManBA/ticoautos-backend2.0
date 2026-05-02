@@ -8,13 +8,13 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
     public RegisterRequestValidator()
     {
-        RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("El nombre es requerido.")
-            .MaximumLength(100).WithMessage("El nombre no puede superar los 100 caracteres.");
-
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("El correo es requerido.")
             .EmailAddress().WithMessage("El formato del correo no es válido.");
+
+        RuleFor(x => x.Cedula)
+            .NotEmpty().WithMessage("La cédula es requerida.")
+            .Matches(@"^\d{9}$").WithMessage("La cédula debe tener 9 dígitos, sin guiones ni espacios.");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("La contraseña es requerida.")

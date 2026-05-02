@@ -15,11 +15,16 @@ public class IdentityService : IIdentityService
 {
     private readonly IConfiguration _config;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICedulaValidationService _cedulaValidationService;
 
-    public IdentityService(IConfiguration config, IUnitOfWork unitOfWork)
+    public IdentityService(
+        IConfiguration config,
+        IUnitOfWork unitOfWork,
+        ICedulaValidationService cedulaValidationService)
     {
         _config = config;
         _unitOfWork = unitOfWork;
+        _cedulaValidationService = cedulaValidationService;
     }
 
     /// <summary>
@@ -51,17 +56,25 @@ public class IdentityService : IIdentityService
     /// <summary>
     /// Registers a new user after validating email uniqueness and hashing the password.
     /// </summary>
-    public async Task<(bool Success, string Token, string Error)> RegisterAsync(
-        string email, string password, string fullName)
+    public async Task<(bool Success, int UserId, string Token, string FullName, string Error)> RegisterAsync(
+        string email, string password, string cedula)
     {
 
         if (await _unitOfWork.Users.ExistsAsync(email))
-            return (false, string.Empty, "Email already registered.");
+            return (false, 0, string.Empty, string.Empty, "Email already registered.");
+
+        if (await _unitOfWork.Users.ExistsByCedulaAsync(cedula))
+            return (false, 0, string.Empty, string.Empty, "Cedula already registered.");
+
+        var cedulaValidation = await _cedulaValidationService.ValidateAsync(cedula);
+        if (!cedulaValidation.IsValid)
+            return (false, 0, string.Empty, string.Empty, cedulaValidation.Error ?? "Cedula validation failed.");
 
         var user = new User
         {
             Email = email,
-            Name = fullName,
+            Name = cedulaValidation.FullName,
+            Cedula = cedulaValidation.Cedula,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
         };
 
@@ -69,7 +82,7 @@ public class IdentityService : IIdentityService
         await _unitOfWork.SaveChangesAsync();
 
         var token = GenerateToken(user.Email, user.Id.ToString());
-        return (true, token, string.Empty);
+        return (true, user.Id, token, user.Name, string.Empty);
     }
 
     /// <summary>

@@ -38,12 +38,12 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var (success, token, error) = await _identityService.RegisterAsync(
-            request.Email, request.Password, request.FullName);
+        var (success, userId, token, fullName, error) = await _identityService.RegisterAsync(
+            request.Email, request.Password, request.Cedula);
 
         if (!success)
             return Conflict(new { message = error });
 
-        return Ok(new UserResponseDto(0, request.FullName, request.Email, token));
+        return Ok(new UserResponseDto(userId, fullName, request.Email, token));
     }
 }

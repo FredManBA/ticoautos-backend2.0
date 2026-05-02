@@ -23,6 +23,9 @@ public class UserRepository : IUserRepository
     public async Task<bool> ExistsAsync(string email) =>
         await _context.Users.AnyAsync(u => u.Email == email);
 
+    public async Task<bool> ExistsByCedulaAsync(string cedula) =>
+        await _context.Users.AnyAsync(u => u.Cedula == cedula);
+
     public async Task AddAsync(User user) =>
         await _context.Users.AddAsync(user);
 }
