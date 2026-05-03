@@ -11,7 +11,7 @@ using TicoAutos.Infrastructure;
 using TicoAutos.Application.Mappings;
 using TicoAutos.WebApi.Auth;
 using TicoAutos.WebApi.Extensions;
-using TicoAutos.WebApi.GraphQL;
+
 
 
 
@@ -41,9 +41,6 @@ builder.Services.AddAutoMapper(cfg =>
     cfg.AddProfile<MappingProfile>();
 }, typeof(MappingProfile).Assembly);
 
-builder.Services
-    .AddGraphQLServer()
-    .AddQueryType<Query>();
 
 // Configure JWT Authentication
 var authenticationBuilder = builder.Services.AddAuthentication(opt => {
@@ -115,5 +112,4 @@ if (app.Environment.IsDevelopment()) {
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapGraphQL();
 app.Run();
