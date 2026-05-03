@@ -32,12 +32,31 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var (success, token, error) = await _identityService.LoginAsync(request.Email, request.Password);
+        var (success, requiresTwoFactor, token, twoFactorToken, email, fullName, error) =
+            await _identityService.LoginAsync(request.Email, request.Password);
 
         if (!success)
             return Unauthorized(new { message = error });
 
-        return Ok(new AuthResponse(token, request.Email, string.Empty));
+        return Ok(new LoginResponse(
+            requiresTwoFactor,
+            string.IsNullOrWhiteSpace(token) ? null : token,
+            string.IsNullOrWhiteSpace(twoFactorToken) ? null : twoFactorToken,
+            email,
+            fullName,
+            requiresTwoFactor ? "Codigo de verificacion enviado." : "Login correcto."));
+    }
+
+    [HttpPost("verify-2fa")]
+    public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorRequest request)
+    {
+        var (success, token, email, fullName, error) =
+            await _identityService.VerifyTwoFactorAsync(request.TwoFactorToken, request.Code);
+
+        if (!success)
+            return Unauthorized(new { message = error });
+
+        return Ok(new AuthResponse(token, email, fullName));
     }
 
     /// <summary>
@@ -48,7 +67,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var (success, userId, fullName, error) = await _identityService.RegisterAsync(
-            request.Email, request.Password, request.Cedula);
+            request.Email, request.Password, request.Cedula, request.PhoneNumber);
 
         if (!success)
         {
@@ -188,6 +207,7 @@ public class AuthController : ControllerBase
             user.Name,
             user.Email,
             user.Cedula,
+            user.PhoneNumber,
             user.AccountStatus,
             user.IsEmailVerified));
     }

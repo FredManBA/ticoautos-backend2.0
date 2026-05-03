@@ -12,6 +12,7 @@ public class User : BaseEntity
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? Cedula { get; set; }
+    public string? PhoneNumber { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
     public string AuthProvider { get; set; } = AuthProviders.Local;
     public string? ExternalProviderId { get; set; }

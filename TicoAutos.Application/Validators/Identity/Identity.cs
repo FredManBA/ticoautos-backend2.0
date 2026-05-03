@@ -16,6 +16,10 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .NotEmpty().WithMessage("La cédula es requerida.")
             .Matches(@"^\d{9}$").WithMessage("La cédula debe tener 9 dígitos, sin guiones ni espacios.");
 
+        RuleFor(x => x.PhoneNumber)
+            .NotEmpty().WithMessage("El telefono es requerido.")
+            .Matches(@"^\+506\d{8}$").WithMessage("El telefono debe usar el formato +506########.");
+
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("La contraseña es requerida.")
             .MinimumLength(8).WithMessage("La contraseña debe tener al menos 8 caracteres.")

@@ -5,5 +5,6 @@ public record CurrentUserResponse(
     string FullName,
     string Email,
     string? Cedula,
+    string? PhoneNumber,
     string AccountStatus,
     bool IsEmailVerified);

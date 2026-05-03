@@ -38,6 +38,12 @@ public static class DependencyInjection
             client.BaseAddress = new Uri("https://api.sendgrid.com/v3/");
         });
 
+        services.AddHttpClient<ITwoFactorSender, TwilioVerifyTwoFactorSender>(client =>
+        {
+            client.BaseAddress = new Uri("https://verify.twilio.com/v2/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+
         // Register repositories and services for dependency injection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();

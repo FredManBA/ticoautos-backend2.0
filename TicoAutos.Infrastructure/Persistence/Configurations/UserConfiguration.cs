@@ -20,6 +20,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Cedula)
             .HasMaxLength(9);
 
+        builder.Property(u => u.PhoneNumber)
+            .HasMaxLength(20);
+
         builder.Property(u => u.AuthProvider)
             .HasMaxLength(40)
             .HasDefaultValue(AuthProviders.Local)
