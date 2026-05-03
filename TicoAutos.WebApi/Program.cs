@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +9,7 @@ using TicoAutos.Application.Validators.Vehicles;
 using TicoAutos.Domain.Interfaces;
 using TicoAutos.Infrastructure;
 using TicoAutos.Application.Mappings;
+using TicoAutos.WebApi.Auth;
 using TicoAutos.WebApi.Extensions;
 using TicoAutos.WebApi.GraphQL;
 
@@ -44,7 +46,7 @@ builder.Services
     .AddQueryType<Query>();
 
 // Configure JWT Authentication
-builder.Services.AddAuthentication(opt => {
+var authenticationBuilder = builder.Services.AddAuthentication(opt => {
     opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
@@ -59,7 +61,29 @@ builder.Services.AddAuthentication(opt => {
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
+})
+.AddCookie(ExternalAuthSchemes.GoogleExternalCookie, opt =>
+{
+    opt.Cookie.Name = "TicoAutos.Google.External";
+    opt.ExpireTimeSpan = TimeSpan.FromMinutes(5);
 });
+
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+var googleCallbackPath = builder.Configuration["Authentication:Google:CallbackPath"];
+
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authenticationBuilder.AddGoogle(GoogleDefaults.AuthenticationScheme, opt =>
+    {
+        opt.ClientId = googleClientId;
+        opt.ClientSecret = googleClientSecret;
+        opt.SignInScheme = ExternalAuthSchemes.GoogleExternalCookie;
+
+        if (!string.IsNullOrWhiteSpace(googleCallbackPath))
+            opt.CallbackPath = googleCallbackPath;
+    });
+}
 
 builder.Services.AddAuthorization();
 

@@ -15,6 +15,7 @@ namespace TicoAutos.Infrastructure.Identity;
 /// </summary>
 public class IdentityService : IIdentityService
 {
+    private const string GoogleRegistrationPurpose = "google_registration";
     private const string VerificationEmailFailureMessage =
         "La cuenta fue creada, pero no fue posible enviar el correo de verificacion. Intente reenviarlo mas tarde.";
 
@@ -107,7 +108,13 @@ public class IdentityService : IIdentityService
     {
         var user = await _unitOfWork.Users.GetByEmailAsync(email);
 
-        if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        if (user is null)
+            return (false, string.Empty, "Invalid credentials.");
+
+        if (user.AuthProvider != AuthProviders.Local)
+            return (false, string.Empty, "Use Google sign-in for this account.");
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             return (false, string.Empty, "Invalid credentials.");
 
         if (!user.IsEmailVerified || user.AccountStatus == AccountStatuses.Pending)
@@ -159,6 +166,66 @@ public class IdentityService : IIdentityService
         return (true, "Correo de verificacion reenviado.", string.Empty);
     }
 
+    public async Task<(bool Success, bool RequiresCedula, string Token, string RegistrationToken, string Email, string FullName, string Error)> GoogleSignInAsync(
+        string email,
+        string fullName,
+        string googleId)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(googleId))
+            return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "Google account information is incomplete.");
+
+        var googleUser = await _unitOfWork.Users.GetByExternalLoginAsync(AuthProviders.Google, googleId);
+        if (googleUser is not null)
+        {
+            var token = GenerateToken(googleUser.Email, googleUser.Id.ToString());
+            return (true, false, token, string.Empty, googleUser.Email, googleUser.Name, string.Empty);
+        }
+
+        var userWithEmail = await _unitOfWork.Users.GetByEmailAsync(email);
+        if (userWithEmail is not null)
+            return (false, false, string.Empty, string.Empty, email, fullName, "Email already registered with another sign-in method.");
+
+        var registrationToken = GenerateGoogleRegistrationToken(email, fullName, googleId);
+        return (true, true, string.Empty, registrationToken, email, fullName, string.Empty);
+    }
+
+    public async Task<(bool Success, string Token, string Email, string FullName, string Error)> CompleteGoogleRegistrationAsync(
+        string registrationToken,
+        string cedula)
+    {
+        var (isValid, email, fullName, googleId) = ValidateGoogleRegistrationToken(registrationToken);
+        if (!isValid)
+            return (false, string.Empty, string.Empty, string.Empty, "Invalid or expired Google registration token.");
+
+        if (await _unitOfWork.Users.ExistsAsync(email))
+            return (false, string.Empty, email, fullName, "Email already registered.");
+
+        if (await _unitOfWork.Users.ExistsByCedulaAsync(cedula))
+            return (false, string.Empty, email, fullName, "Cedula already registered.");
+
+        var cedulaValidation = await _cedulaValidationService.ValidateAsync(cedula);
+        if (!cedulaValidation.IsValid)
+            return (false, string.Empty, email, fullName, cedulaValidation.Error ?? "Cedula validation failed.");
+
+        var user = new User
+        {
+            Email = email,
+            Name = cedulaValidation.FullName,
+            Cedula = cedulaValidation.Cedula,
+            PasswordHash = string.Empty,
+            AuthProvider = AuthProviders.Google,
+            ExternalProviderId = googleId,
+            AccountStatus = AccountStatuses.Active,
+            IsEmailVerified = true
+        };
+
+        await _unitOfWork.Users.AddAsync(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        var token = GenerateToken(user.Email, user.Id.ToString());
+        return (true, token, user.Email, user.Name, string.Empty);
+    }
+
     private async Task<bool> TrySendVerificationEmailAsync(User user)
     {
         try
@@ -193,6 +260,71 @@ public class IdentityService : IIdentityService
             ?? throw new InvalidOperationException("EmailVerification:VerifyUrl is missing.");
 
         return $"{verifyUrl}?token={Uri.EscapeDataString(token)}";
+    }
+
+    private string GenerateGoogleRegistrationToken(string email, string fullName, string googleId)
+    {
+        var jwtSettings = _config.GetSection("JwtSettings");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"] ?? ""));
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Email, email),
+            new Claim(ClaimTypes.Name, fullName),
+            new Claim("google_id", googleId),
+            new Claim("purpose", GoogleRegistrationPurpose)
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(15),
+            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private (bool IsValid, string Email, string FullName, string GoogleId) ValidateGoogleRegistrationToken(string token)
+    {
+        try
+        {
+            var jwtSettings = _config.GetSection("JwtSettings");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"] ?? ""));
+
+            var principal = new JwtSecurityTokenHandler().ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["Issuer"],
+                ValidAudience = jwtSettings["Audience"],
+                IssuerSigningKey = key,
+                ClockSkew = TimeSpan.FromMinutes(1)
+            }, out _);
+
+            var purpose = principal.FindFirst("purpose")?.Value;
+            var email = principal.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+            var fullName = principal.FindFirst(ClaimTypes.Name)?.Value;
+            var googleId = principal.FindFirst("google_id")?.Value;
+
+            if (purpose != GoogleRegistrationPurpose ||
+                string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(googleId))
+                return (false, string.Empty, string.Empty, string.Empty);
+
+            return (true, email, fullName ?? email, googleId);
+        }
+        catch (ArgumentException)
+        {
+            return (false, string.Empty, string.Empty, string.Empty);
+        }
+        catch (SecurityTokenException)
+        {
+            return (false, string.Empty, string.Empty, string.Empty);
+        }
     }
 
     private static string GenerateVerificationToken()

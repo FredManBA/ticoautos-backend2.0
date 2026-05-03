@@ -20,6 +20,14 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Cedula)
             .HasMaxLength(9);
 
+        builder.Property(u => u.AuthProvider)
+            .HasMaxLength(40)
+            .HasDefaultValue(AuthProviders.Local)
+            .IsRequired();
+
+        builder.Property(u => u.ExternalProviderId)
+            .HasMaxLength(128);
+
         builder.Property(u => u.AccountStatus)
             .HasMaxLength(40)
             .HasDefaultValue(AccountStatuses.Active)
@@ -41,5 +49,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(u => u.EmailVerificationToken)
             .IsUnique()
             .HasFilter("[EmailVerificationToken] IS NOT NULL");
+
+        builder.HasIndex(u => new { u.AuthProvider, u.ExternalProviderId })
+            .IsUnique()
+            .HasFilter("[ExternalProviderId] IS NOT NULL");
     }
 }

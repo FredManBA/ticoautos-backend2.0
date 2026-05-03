@@ -9,6 +9,7 @@ public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int id);
     Task<User?> GetByEmailAsync(string email);
+    Task<User?> GetByExternalLoginAsync(string authProvider, string externalProviderId);
     Task<User?> GetByEmailVerificationTokenAsync(string token);
     Task<bool> ExistsAsync(string email);
     Task<bool> ExistsByCedulaAsync(string cedula);

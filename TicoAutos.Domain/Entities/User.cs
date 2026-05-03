@@ -13,6 +13,8 @@ public class User : BaseEntity
     public string Email { get; set; } = string.Empty;
     public string? Cedula { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
+    public string AuthProvider { get; set; } = AuthProviders.Local;
+    public string? ExternalProviderId { get; set; }
     public string AccountStatus { get; set; } = AccountStatuses.Active;
     public bool IsEmailVerified { get; set; } = true;
     public string? EmailVerificationToken { get; set; }

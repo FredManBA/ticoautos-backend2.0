@@ -23,6 +23,10 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByEmailAsync(string email) =>
         await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
+    public async Task<User?> GetByExternalLoginAsync(string authProvider, string externalProviderId) =>
+        await _context.Users.FirstOrDefaultAsync(u =>
+            u.AuthProvider == authProvider && u.ExternalProviderId == externalProviderId);
+
     public async Task<User?> GetByEmailVerificationTokenAsync(string token) =>
         await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == token);
 
