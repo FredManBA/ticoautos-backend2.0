@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using TicoAutos.Domain.Constants;
 using TicoAutos.Domain.Entities;
 using TicoAutos.Domain.Interfaces;
 
@@ -14,6 +15,9 @@ namespace TicoAutos.Infrastructure.Identity;
 /// </summary>
 public class IdentityService : IIdentityService
 {
+    private const string VerificationEmailFailureMessage =
+        "La cuenta fue creada, pero no fue posible enviar el correo de verificacion. Intente reenviarlo mas tarde.";
+
     private readonly IConfiguration _config;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICedulaValidationService _cedulaValidationService;
@@ -73,25 +77,24 @@ public class IdentityService : IIdentityService
         if (!cedulaValidation.IsValid)
             return (false, 0, string.Empty, cedulaValidation.Error ?? "Cedula validation failed.");
 
-        var verificationToken = GenerateVerificationToken();
-
         var user = new User
         {
             Email = email,
             Name = cedulaValidation.FullName,
             Cedula = cedulaValidation.Cedula,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-            AccountStatus = "Pending",
-            IsEmailVerified = false,
-            EmailVerificationToken = verificationToken,
-            EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24)
+            AccountStatus = AccountStatuses.Pending,
+            IsEmailVerified = false
         };
+
+        SetVerificationToken(user);
 
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        var verificationLink = BuildVerificationLink(verificationToken);
-        await _emailSender.SendVerificationEmailAsync(user.Email, user.Name, verificationLink);
+        var emailSent = await TrySendVerificationEmailAsync(user);
+        if (!emailSent)
+            return (false, user.Id, user.Name, VerificationEmailFailureMessage);
 
         return (true, user.Id, user.Name, string.Empty);
     }
@@ -107,7 +110,7 @@ public class IdentityService : IIdentityService
         if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             return (false, string.Empty, "Invalid credentials.");
 
-        if (!user.IsEmailVerified || user.AccountStatus == "Pending")
+        if (!user.IsEmailVerified || user.AccountStatus == AccountStatuses.Pending)
             return (false, string.Empty, "Account pending email verification.");
 
         var token = GenerateToken(user.Email, user.Id.ToString());
@@ -128,12 +131,60 @@ public class IdentityService : IIdentityService
             return (false, "Verification token expired.");
 
         user.IsEmailVerified = true;
-        user.AccountStatus = "Active";
+        user.AccountStatus = AccountStatuses.Active;
         user.EmailVerificationToken = null;
         user.EmailVerificationTokenExpiresAt = null;
 
         await _unitOfWork.SaveChangesAsync();
         return (true, string.Empty);
+    }
+
+    public async Task<(bool Success, string Message, string Error)> ResendVerificationAsync(string email)
+    {
+        var user = await _unitOfWork.Users.GetByEmailAsync(email);
+
+        if (user is null)
+            return (true, "Si la cuenta existe y esta pendiente, se enviara un nuevo correo de verificacion.", string.Empty);
+
+        if (user.IsEmailVerified || user.AccountStatus == AccountStatuses.Active)
+            return (false, string.Empty, "La cuenta ya esta verificada.");
+
+        SetVerificationToken(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        var emailSent = await TrySendVerificationEmailAsync(user);
+        if (!emailSent)
+            return (false, string.Empty, "No fue posible reenviar el correo de verificacion en este momento.");
+
+        return (true, "Correo de verificacion reenviado.", string.Empty);
+    }
+
+    private async Task<bool> TrySendVerificationEmailAsync(User user)
+    {
+        try
+        {
+            var verificationLink = BuildVerificationLink(user.EmailVerificationToken!);
+            await _emailSender.SendVerificationEmailAsync(user.Email, user.Name, verificationLink);
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+        catch (HttpRequestException)
+        {
+            return false;
+        }
+        catch (TaskCanceledException)
+        {
+            return false;
+        }
+    }
+
+    private void SetVerificationToken(User user)
+    {
+        user.EmailVerificationToken = GenerateVerificationToken();
+        user.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24);
     }
 
     private string BuildVerificationLink(string token)

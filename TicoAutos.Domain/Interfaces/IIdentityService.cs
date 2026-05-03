@@ -9,4 +9,5 @@ public interface IIdentityService
     Task<(bool Success, int UserId, string FullName, string Error)> RegisterAsync(string email, string password, string cedula);
     Task<(bool Success, string Token, string Error)> LoginAsync(string email, string password);
     Task<(bool Success, string Error)> VerifyEmailAsync(string token);
+    Task<(bool Success, string Message, string Error)> ResendVerificationAsync(string email);
 }

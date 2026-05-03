@@ -1,5 +1,7 @@
 ﻿using TicoAutos.Domain.Common;
 
+using TicoAutos.Domain.Constants;
+
 namespace TicoAutos.Domain.Entities;
 
 /// <summary>
@@ -11,7 +13,7 @@ public class User : BaseEntity
     public string Email { get; set; } = string.Empty;
     public string? Cedula { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
-    public string AccountStatus { get; set; } = "Active";
+    public string AccountStatus { get; set; } = AccountStatuses.Active;
     public bool IsEmailVerified { get; set; } = true;
     public string? EmailVerificationToken { get; set; }
     public DateTime? EmailVerificationTokenExpiresAt { get; set; }

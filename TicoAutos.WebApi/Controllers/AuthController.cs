@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using TicoAutos.Application.DTOs;
+using TicoAutos.Domain.Constants;
 using TicoAutos.Domain.Interfaces;
 
 namespace TicoAutos.WebApi.Controllers;
@@ -43,13 +44,18 @@ public class AuthController : ControllerBase
             request.Email, request.Password, request.Cedula);
 
         if (!success)
+        {
+            if (userId > 0)
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = error });
+
             return Conflict(new { message = error });
+        }
 
         return Ok(new RegistrationResponse(
             userId,
             fullName,
             request.Email,
-            "Pending",
+            AccountStatuses.Pending,
             "Usuario registrado. Revise su correo para activar la cuenta."));
     }
 
@@ -60,12 +66,29 @@ public class AuthController : ControllerBase
     [HttpGet("verify-email")]
     public async Task<IActionResult> VerifyEmail([FromQuery] string token)
     {
+        if (string.IsNullOrWhiteSpace(token))
+            return BadRequest(new { message = "Token de verificacion requerido." });
+
         var (success, error) = await _identityService.VerifyEmailAsync(token);
 
         if (!success)
             return BadRequest(new { message = error });
 
         return Ok(new { message = "Cuenta verificada correctamente." });
+    }
+
+    [HttpPost("resend-verification")]
+    public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+            return BadRequest(new { message = "Correo requerido." });
+
+        var (success, message, error) = await _identityService.ResendVerificationAsync(request.Email);
+
+        if (!success)
+            return BadRequest(new { message = error });
+
+        return Ok(new { message });
     }
 
     [HttpGet("me")]

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TicoAutos.Domain.Constants;
 using TicoAutos.Domain.Entities;
 
 namespace TicoAutos.Infrastructure.Persistence.Configurations;
@@ -21,7 +22,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.AccountStatus)
             .HasMaxLength(40)
-            .HasDefaultValue("Active")
+            .HasDefaultValue(AccountStatuses.Active)
             .IsRequired();
 
         builder.Property(u => u.IsEmailVerified)

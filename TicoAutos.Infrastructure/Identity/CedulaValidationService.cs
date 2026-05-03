@@ -10,6 +10,7 @@ namespace TicoAutos.Infrastructure.Identity;
 /// </summary>
 public class CedulaValidationService : ICedulaValidationService
 {
+    private const string GenericUnavailableMessage = "No fue posible validar la cedula en este momento.";
     private readonly HttpClient _httpClient;
 
     public CedulaValidationService(HttpClient httpClient)
@@ -19,24 +20,35 @@ public class CedulaValidationService : ICedulaValidationService
 
     public async Task<CedulaValidationResult> ValidateAsync(string cedula, CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.GetAsync($"padron/cedula/{cedula}", cancellationToken);
+        try
+        {
+            var response = await _httpClient.GetAsync($"padron/cedula/{cedula}", cancellationToken);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return new CedulaValidationResult(false, cedula, string.Empty, "La cédula no existe en el padrón electoral.");
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return new CedulaValidationResult(false, cedula, string.Empty, "La cedula no existe en el padron electoral.");
 
-        if (response.StatusCode == HttpStatusCode.BadRequest)
-            return new CedulaValidationResult(false, cedula, string.Empty, "El formato de la cédula no es válido.");
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+                return new CedulaValidationResult(false, cedula, string.Empty, "El formato de la cedula no es valido.");
 
-        if (!response.IsSuccessStatusCode)
-            return new CedulaValidationResult(false, cedula, string.Empty, "No fue posible validar la cédula en este momento.");
+            if (!response.IsSuccessStatusCode)
+                return new CedulaValidationResult(false, cedula, string.Empty, GenericUnavailableMessage);
 
-        var persona = await response.Content.ReadFromJsonAsync<PadronPersonaResponse>(cancellationToken);
+            var persona = await response.Content.ReadFromJsonAsync<PadronPersonaResponse>(cancellationToken);
 
-        if (persona is null)
-            return new CedulaValidationResult(false, cedula, string.Empty, "La respuesta del padrón no tiene el formato esperado.");
+            if (persona is null)
+                return new CedulaValidationResult(false, cedula, string.Empty, "La respuesta del padron no tiene el formato esperado.");
 
-        var fullName = $"{persona.Nombre} {persona.PrimerApellido} {persona.SegundoApellido}".Trim();
-        return new CedulaValidationResult(true, persona.Cedula, fullName, null);
+            var fullName = $"{persona.Nombre} {persona.PrimerApellido} {persona.SegundoApellido}".Trim();
+            return new CedulaValidationResult(true, persona.Cedula, fullName, null);
+        }
+        catch (HttpRequestException)
+        {
+            return new CedulaValidationResult(false, cedula, string.Empty, GenericUnavailableMessage);
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new CedulaValidationResult(false, cedula, string.Empty, GenericUnavailableMessage);
+        }
     }
 
     private sealed class PadronPersonaResponse

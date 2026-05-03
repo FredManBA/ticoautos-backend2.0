@@ -30,6 +30,7 @@ public static class DependencyInjection
                 ?? throw new InvalidOperationException("CedulaValidation:BaseUrl is missing.");
 
             client.BaseAddress = new Uri(baseUrl);
+            client.Timeout = TimeSpan.FromSeconds(10);
         });
 
         services.AddHttpClient<IEmailSender, SendGridEmailSender>(client =>

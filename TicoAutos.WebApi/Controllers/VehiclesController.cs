@@ -96,9 +96,7 @@ public class VehiclesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateVehicleRequest request)
     {
-        // Extraer el userId del JWT claim
-        var userIdClaim = User.FindFirst("id")?.Value;
-        if (userIdClaim is null || !int.TryParse(userIdClaim, out int userId))
+        if (!TryGetAuthenticatedUserId(out var userId))
             return Unauthorized(new { message = "Token inválido." });
 
         var vehicle = _mapper.Map<Vehicle>(request);
@@ -121,8 +119,14 @@ public class VehiclesController : ControllerBase
     {
         if (id != request.Id) return BadRequest("ID mismatch");
 
+        if (!TryGetAuthenticatedUserId(out var userId))
+            return Unauthorized(new { message = "Token inválido." });
+
         var existing = await _unitOfWork.Vehicles.GetByIdAsync(id);
         if (existing is null) return NotFound();
+
+        if (existing.OwnerId != userId)
+            return Forbid();
 
         _mapper.Map(request, existing);
         _unitOfWork.Vehicles.Update(existing);
@@ -139,8 +143,14 @@ public class VehiclesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!TryGetAuthenticatedUserId(out var userId))
+            return Unauthorized(new { message = "Token inválido." });
+
         var vehicle = await _unitOfWork.Vehicles.GetByIdAsync(id);
         if (vehicle is null) return NotFound();
+
+        if (vehicle.OwnerId != userId)
+            return Forbid();
 
         _unitOfWork.Vehicles.Delete(vehicle);
         await _unitOfWork.SaveChangesAsync();
@@ -156,8 +166,14 @@ public class VehiclesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> MarkAsSold(int id)
     {
+        if (!TryGetAuthenticatedUserId(out var userId))
+            return Unauthorized(new { message = "Token inválido." });
+
         var vehicle = await _unitOfWork.Vehicles.GetByIdAsync(id);
         if (vehicle is null) return NotFound();
+
+        if (vehicle.OwnerId != userId)
+            return Forbid();
 
         vehicle.IsSold = true;
         _unitOfWork.Vehicles.Update(vehicle);
@@ -174,8 +190,7 @@ public class VehiclesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetMine()
     {
-        var userIdClaim = User.FindFirst("id")?.Value;
-        if (userIdClaim is null || !int.TryParse(userIdClaim, out int userId))
+        if (!TryGetAuthenticatedUserId(out var userId))
             return Unauthorized();
 
         var vehicles = await _unitOfWork.Vehicles.GetQueryable()
@@ -187,5 +202,11 @@ public class VehiclesController : ControllerBase
             .ToListAsync();
 
         return Ok(_mapper.Map<IEnumerable<VehicleResponseDto>>(vehicles));
+    }
+
+    private bool TryGetAuthenticatedUserId(out int userId)
+    {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        return int.TryParse(userIdClaim, out userId);
     }
 }
