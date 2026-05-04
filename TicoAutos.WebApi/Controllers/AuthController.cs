@@ -45,14 +45,14 @@ public class AuthController : ControllerBase
             string.IsNullOrWhiteSpace(twoFactorToken) ? null : twoFactorToken,
             email,
             fullName,
-            requiresTwoFactor ? "Codigo de verificacion enviado." : "Login correcto."));
+            requiresTwoFactor ? "Código de verificación enviado." : "Login correcto."));
     }
 
     [HttpPost("verify-2fa")]
     public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorRequest request)
     {
         var (success, token, email, fullName, error) =
-            await _identityService.VerifyTwoFactorAsync(request.TwoFactorToken, request.Code);
+            await _identityService.VerifyTwoFactorAsync(request.TemporaryToken, request.Code);
 
         if (!success)
             return Unauthorized(new { message = error });
@@ -161,7 +161,10 @@ public class AuthController : ControllerBase
     public IActionResult GoogleSignIn()
     {
         if (!IsGoogleAuthConfigured())
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Google authentication is not configured." });
+            return Redirect(BuildGoogleFrontendRedirect("error", new Dictionary<string, string?>
+            {
+                ["message"] = "Google authentication is not configured."
+            }));
 
         var redirectUrl = Url.Action(nameof(GoogleCallback), "Auth");
         var properties = new AuthenticationProperties

@@ -125,14 +125,14 @@ public class IdentityService : IIdentityService
             return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "Invalid credentials.");
 
         if (!user.IsEmailVerified || user.AccountStatus == AccountStatuses.Pending)
-            return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "Account pending email verification.");
+            return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "Debe verificar su correo antes de iniciar sesión.");
 
         if (string.IsNullOrWhiteSpace(user.PhoneNumber))
-            return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "Phone number is required for two-factor authentication.");
+            return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "El teléfono es requerido para doble factor.");
 
         var codeSent = await TrySendTwoFactorCodeAsync(user.PhoneNumber);
         if (!codeSent)
-            return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "No fue posible enviar el codigo de verificacion.");
+            return (false, false, string.Empty, string.Empty, string.Empty, string.Empty, "No fue posible enviar el código de verificación.");
 
         var twoFactorToken = GenerateTwoFactorToken(user);
         return (true, true, string.Empty, twoFactorToken, user.Email, user.Name, string.Empty);
@@ -144,18 +144,18 @@ public class IdentityService : IIdentityService
     {
         var (isValid, userId, phoneNumber) = ValidateTwoFactorToken(twoFactorToken);
         if (!isValid)
-            return (false, string.Empty, string.Empty, string.Empty, "Invalid or expired two-factor token.");
+            return (false, string.Empty, string.Empty, string.Empty, "El token temporal de doble factor es inválido o expiró.");
 
         var user = await _unitOfWork.Users.GetByIdAsync(userId);
         if (user is null || user.AuthProvider != AuthProviders.Local)
-            return (false, string.Empty, string.Empty, string.Empty, "Invalid two-factor token.");
+            return (false, string.Empty, string.Empty, string.Empty, "El token temporal de doble factor es inválido o expiró.");
 
         if (user.PhoneNumber != phoneNumber)
-            return (false, string.Empty, string.Empty, string.Empty, "Invalid two-factor token.");
+            return (false, string.Empty, string.Empty, string.Empty, "El token temporal de doble factor es inválido o expiró.");
 
         var codeIsValid = await TryCheckTwoFactorCodeAsync(phoneNumber, code);
         if (!codeIsValid)
-            return (false, string.Empty, string.Empty, string.Empty, "Invalid verification code.");
+            return (false, string.Empty, string.Empty, string.Empty, "El código de verificación no es válido o expiró.");
 
         var token = GenerateToken(user.Email, user.Id.ToString());
         return (true, token, user.Email, user.Name, string.Empty);
@@ -214,6 +214,9 @@ public class IdentityService : IIdentityService
         var googleUser = await _unitOfWork.Users.GetByExternalLoginAsync(AuthProviders.Google, googleId);
         if (googleUser is not null)
         {
+            if (googleUser.AccountStatus != AccountStatuses.Active)
+                return (false, false, string.Empty, string.Empty, googleUser.Email, googleUser.Name, "La cuenta no está activa.");
+
             var token = GenerateToken(googleUser.Email, googleUser.Id.ToString());
             return (true, false, token, string.Empty, googleUser.Email, googleUser.Name, string.Empty);
         }
