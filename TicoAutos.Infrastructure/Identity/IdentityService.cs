@@ -396,7 +396,12 @@ public class IdentityService : IIdentityService
             var jwtSettings = _config.GetSection("JwtSettings");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"] ?? ""));
 
-            var principal = new JwtSecurityTokenHandler().ValidateToken(token, new TokenValidationParameters
+            var tokenHandler = new JwtSecurityTokenHandler
+            {
+                MapInboundClaims = false
+            };
+
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,

@@ -9,6 +9,9 @@ public class AnswerQuestionRequestValidator : AbstractValidator<AnswerQuestionRe
     {
         RuleFor(x => x.Content)
             .NotEmpty().WithMessage("La respuesta es requerida.")
-            .MaximumLength(500).WithMessage("La respuesta no puede superar 500 caracteres.");
+            .MinimumLength(3).WithMessage("La respuesta debe tener al menos 3 caracteres.")
+            .MaximumLength(500).WithMessage("La respuesta no puede superar 500 caracteres.")
+            .Must(ContactInfoValidator.DoesNotContainContactInfo)
+            .WithMessage(ContactInfoValidator.Message);
     }
 }

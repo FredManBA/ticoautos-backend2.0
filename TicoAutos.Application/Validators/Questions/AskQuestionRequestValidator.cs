@@ -9,6 +9,9 @@ public class AskQuestionRequestValidator : AbstractValidator<AskQuestionRequest>
     {
         RuleFor(x => x.Content)
             .NotEmpty().WithMessage("La pregunta es requerida.")
-            .MaximumLength(500).WithMessage("La pregunta no puede superar 500 caracteres.");
+            .MinimumLength(5).WithMessage("La pregunta debe tener al menos 5 caracteres.")
+            .MaximumLength(500).WithMessage("La pregunta no puede superar 500 caracteres.")
+            .Must(ContactInfoValidator.DoesNotContainContactInfo)
+            .WithMessage(ContactInfoValidator.Message);
     }
 }
