@@ -15,6 +15,8 @@ namespace TicoAutos.Infrastructure.Identity;
 /// </summary>
 public class IdentityService : IIdentityService
 {
+    private const string EmailAlreadyRegisteredMessage = "El correo ya está registrado.";
+    private const string CedulaAlreadyRegisteredMessage = "La cédula ya está registrada.";
     private const string GoogleRegistrationPurpose = "google_registration";
     private const string TwoFactorPurpose = "two_factor";
     private const string VerificationEmailFailureMessage =
@@ -73,14 +75,14 @@ public class IdentityService : IIdentityService
         string email, string password, string cedula, string phoneNumber)
     {
         if (await _unitOfWork.Users.ExistsAsync(email))
-            return (false, 0, string.Empty, "Email already registered.");
+            return (false, 0, string.Empty, EmailAlreadyRegisteredMessage);
 
         if (await _unitOfWork.Users.ExistsByCedulaAsync(cedula))
-            return (false, 0, string.Empty, "Cedula already registered.");
+            return (false, 0, string.Empty, CedulaAlreadyRegisteredMessage);
 
         var cedulaValidation = await _cedulaValidationService.ValidateAsync(cedula);
         if (!cedulaValidation.IsValid)
-            return (false, 0, string.Empty, cedulaValidation.Error ?? "Cedula validation failed.");
+            return (false, 0, string.Empty, cedulaValidation.Error ?? "No fue posible validar la cedula en este momento.");
 
         var user = new User
         {
@@ -233,14 +235,14 @@ public class IdentityService : IIdentityService
             return (false, string.Empty, string.Empty, string.Empty, "Invalid or expired Google registration token.");
 
         if (await _unitOfWork.Users.ExistsAsync(email))
-            return (false, string.Empty, email, fullName, "Email already registered.");
+            return (false, string.Empty, email, fullName, EmailAlreadyRegisteredMessage);
 
         if (await _unitOfWork.Users.ExistsByCedulaAsync(cedula))
-            return (false, string.Empty, email, fullName, "Cedula already registered.");
+            return (false, string.Empty, email, fullName, CedulaAlreadyRegisteredMessage);
 
         var cedulaValidation = await _cedulaValidationService.ValidateAsync(cedula);
         if (!cedulaValidation.IsValid)
-            return (false, string.Empty, email, fullName, cedulaValidation.Error ?? "Cedula validation failed.");
+            return (false, string.Empty, email, fullName, cedulaValidation.Error ?? "No fue posible validar la cedula en este momento.");
 
         var user = new User
         {

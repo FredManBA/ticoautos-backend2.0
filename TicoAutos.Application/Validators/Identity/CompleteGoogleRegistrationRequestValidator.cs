@@ -11,7 +11,7 @@ public class CompleteGoogleRegistrationRequestValidator : AbstractValidator<Comp
             .NotEmpty().WithMessage("El token de registro es requerido.");
 
         RuleFor(x => x.Cedula)
-            .NotEmpty().WithMessage("La cedula es requerida.")
-            .Matches(@"^\d{9}$").WithMessage("La cedula debe tener 9 digitos, sin guiones ni espacios.");
+            .NotEmpty().WithMessage("La cédula es requerida.")
+            .Matches(@"^\d{9}$").WithMessage("La cédula debe tener 9 dígitos, sin guiones ni espacios.");
     }
 }

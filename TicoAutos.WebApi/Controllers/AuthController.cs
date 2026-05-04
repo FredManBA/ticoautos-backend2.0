@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using TicoAutos.Application.DTOs;
 using TicoAutos.Domain.Constants;
 using TicoAutos.Domain.Interfaces;
@@ -74,7 +75,13 @@ public class AuthController : ControllerBase
             if (userId > 0)
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = error });
 
-            return Conflict(new { message = error });
+            if (IsCedulaProviderUnavailable(error))
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = error });
+
+            if (IsDuplicateConflict(error))
+                return Conflict(new { message = error });
+
+            return BadRequest(new { message = error });
         }
 
         return Ok(new RegistrationResponse(
@@ -83,6 +90,39 @@ public class AuthController : ControllerBase
             request.Email,
             AccountStatuses.Pending,
             "Usuario registrado. Revise su correo para activar la cuenta."));
+    }
+
+    /// <summary>
+    /// Validates a cedula against the external electoral registry and returns the holder name.
+    /// GET /api/auth/cedula/{cedula}
+    /// </summary>
+    [HttpGet("cedula/{cedula}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> LookupCedula(
+        [FromRoute] string cedula,
+        [FromServices] ICedulaValidationService cedulaValidationService,
+        [FromServices] IUnitOfWork unitOfWork)
+    {
+        if (string.IsNullOrWhiteSpace(cedula) || !Regex.IsMatch(cedula, @"^\d{9}$"))
+            return BadRequest(new { message = "La cédula debe tener 9 dígitos, sin guiones ni espacios." });
+
+        if (await unitOfWork.Users.ExistsByCedulaAsync(cedula))
+            return Conflict(new { message = "La cédula ya está registrada." });
+
+        var validation = await cedulaValidationService.ValidateAsync(cedula);
+        if (!validation.IsValid)
+        {
+            var message = validation.Error ?? "No fue posible validar la cedula en este momento.";
+            if (IsCedulaProviderUnavailable(message))
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message });
+
+            if (IsCedulaNotFound(message))
+                return NotFound(new { message });
+
+            return BadRequest(new { message });
+        }
+
+        return Ok(new CedulaLookupResponse(validation.Cedula, validation.FullName));
     }
 
     /// <summary>
@@ -185,7 +225,15 @@ public class AuthController : ControllerBase
             await _identityService.CompleteGoogleRegistrationAsync(request.RegistrationToken, request.Cedula);
 
         if (!success)
+        {
+            if (IsCedulaProviderUnavailable(error))
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = error });
+
+            if (IsDuplicateConflict(error))
+                return Conflict(new { message = error });
+
             return BadRequest(new { message = error });
+        }
 
         return Ok(new AuthResponse(token, email, fullName));
     }
@@ -225,5 +273,26 @@ public class AuthController : ControllerBase
 
         values["status"] = status;
         return QueryHelpers.AddQueryString(callbackUrl, values);
+    }
+
+    private static bool IsCedulaProviderUnavailable(string error)
+    {
+        return string.Equals(
+            error,
+            "No fue posible validar la cedula en este momento.",
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsDuplicateConflict(string error)
+    {
+        return error.Contains("registrad", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsCedulaNotFound(string error)
+    {
+        return string.Equals(
+            error,
+            "La cédula no existe en el padrón electoral.",
+            StringComparison.OrdinalIgnoreCase);
     }
 }

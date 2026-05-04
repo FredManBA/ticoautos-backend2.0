@@ -25,10 +25,10 @@ public class CedulaValidationService : ICedulaValidationService
             var response = await _httpClient.GetAsync($"padron/cedula/{cedula}", cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
-                return new CedulaValidationResult(false, cedula, string.Empty, "La cedula no existe en el padron electoral.");
+                return new CedulaValidationResult(false, cedula, string.Empty, "La cédula no existe en el padrón electoral.");
 
             if (response.StatusCode == HttpStatusCode.BadRequest)
-                return new CedulaValidationResult(false, cedula, string.Empty, "El formato de la cedula no es valido.");
+                return new CedulaValidationResult(false, cedula, string.Empty, "El formato de la cédula no es válido.");
 
             if (!response.IsSuccessStatusCode)
                 return new CedulaValidationResult(false, cedula, string.Empty, GenericUnavailableMessage);
