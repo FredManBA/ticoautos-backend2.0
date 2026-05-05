@@ -12,10 +12,12 @@ namespace TicoAutos.WebApi.Controllers;
 public class QuestionsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IContactModerationService _contactModerationService;
 
-    public QuestionsController(IUnitOfWork unitOfWork)
+    public QuestionsController(IUnitOfWork unitOfWork, IContactModerationService contactModerationService)
     {
         _unitOfWork = unitOfWork;
+        _contactModerationService = contactModerationService;
     }
 
     /// <summary>
@@ -38,6 +40,10 @@ public class QuestionsController : ControllerBase
 
         if (vehicle.IsSold)
             return Conflict(new { message = "No se pueden realizar preguntas en vehículos vendidos." });
+
+        var moderation = await _contactModerationService.ValidateAsync(request.Content, HttpContext.RequestAborted);
+        if (!moderation.IsAllowed)
+            return BadRequest(new { message = moderation.Message, detectedTypes = moderation.DetectedTypes });
 
         var question = new Question
         {
@@ -73,6 +79,10 @@ public class QuestionsController : ControllerBase
 
         if (question.Answer is not null)
             return Conflict(new { message = "Esta pregunta ya tiene respuesta." });
+
+        var moderation = await _contactModerationService.ValidateAsync(request.Content, HttpContext.RequestAborted);
+        if (!moderation.IsAllowed)
+            return BadRequest(new { message = moderation.Message, detectedTypes = moderation.DetectedTypes });
 
         var answer = new Answer
         {

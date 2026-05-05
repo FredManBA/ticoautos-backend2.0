@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TicoAutos.Domain.Interfaces;
 using TicoAutos.Infrastructure.Identity;
+using TicoAutos.Infrastructure.Moderation;
 using TicoAutos.Infrastructure.Persistence;
 using TicoAutos.Infrastructure.Repositories;
 
@@ -41,6 +42,12 @@ public static class DependencyInjection
         services.AddHttpClient<ITwoFactorSender, TwilioVerifyTwoFactorSender>(client =>
         {
             client.BaseAddress = new Uri("https://verify.twilio.com/v2/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+
+        services.AddHttpClient<IContactModerationService, OpenAiContactModerationService>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.openai.com/v1/");
             client.Timeout = TimeSpan.FromSeconds(10);
         });
 
