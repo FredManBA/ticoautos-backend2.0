@@ -1,0 +1,6 @@
+@TicoAutos.GraphQL_HostAddress = http://localhost:5268
+
+GET {{TicoAutos.GraphQL_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

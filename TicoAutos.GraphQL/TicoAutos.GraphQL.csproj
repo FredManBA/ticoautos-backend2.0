@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\TicoAutos.Domain\TicoAutos.Domain.csproj" />
+    <ProjectReference Include="..\TicoAutos.Infrastructure\TicoAutos.Infrastructure.csproj" />
+    <ProjectReference Include="..\TicoAutos.Application\TicoAutos.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HotChocolate.AspNetCore" Version="16.0.0" />
+    <PackageReference Include="HotChocolate.Authorization" Version="16.0.0" />
+    <PackageReference Include="HotChocolate.Data.EntityFramework" Version="16.0.0" />
+<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+<TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
