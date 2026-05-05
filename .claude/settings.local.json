@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\avictor\\\\.nuget\\\\packages\\\\hotchocolate\\\\16.0.0\\\\lib\\\\net10.0\\\\HotChocolate.xml\" -Pattern \"IncludeExceptionDetails|ServiceKind|RegisterService|RequestExecutorOptions\" | Select-Object -First 10 | ForEach-Object { $_.Line.Trim\\(\\) })",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\avictor\\\\.nuget\\\\packages\\\\hotchocolate\\\\16.0.0\\\\lib\\\\net10.0\\\\HotChocolate.xml\" -Pattern \"Exception|exception\" | Select-Object -First 5 | ForEach-Object { $_.Line.Trim\\(\\) })",
+      "PowerShell($xml = [System.IO.File]::ReadAllText\\(\"C:\\\\Users\\\\avictor\\\\.nuget\\\\packages\\\\hotchocolate\\\\16.0.0\\\\lib\\\\net10.0\\\\HotChocolate.xml\"\\); $xml.Length; $xml.Substring\\(0, 500\\))",
+      "PowerShell([System.IO.Directory]::GetFiles\\(\"C:\\\\Users\\\\avictor\\\\.nuget\\\\packages\\\\hotchocolate.execution.configuration.abstractions\\\\16.0.0\\\\lib\\\\net10.0\\\\\"\\) | ForEach-Object { $_ })"
+    ]
+  }
+}

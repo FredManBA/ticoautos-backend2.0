@@ -6,16 +6,8 @@ using TicoAutos.GraphQL.Queries;
 
 namespace TicoAutos.GraphQL.Extensions;
 
-/// <summary>
-/// Extension methods for registering GraphQL services and JWT authentication.
-/// Keeps Program.cs clean following Single Responsibility Principle.
-/// </summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers JWT authentication using the same configuration as TicoAutos.WebApi,
-    /// ensuring the same token works across both services.
-    /// </summary>
     public static IServiceCollection AddJwtAuthentication(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -43,7 +35,6 @@ public static class ServiceCollectionExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(key)
             };
 
-            // Allow JWT via WebSocket for GraphQL subscriptions
             opt.Events = new JwtBearerEvents
             {
                 OnMessageReceived = ctx =>
@@ -60,19 +51,19 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>
-    /// Registers the HotChocolate GraphQL server with all query types and JWT authorization.
-    /// </summary>
     public static IServiceCollection AddGraphQlServer(
         this IServiceCollection services)
     {
+        services.AddScoped<VehicleQuery>();
+        services.AddScoped<QuestionQuery>();
+
         services
             .AddGraphQLServer()
             .AddQueryType()
             .AddTypeExtension<VehicleQuery>()
             .AddTypeExtension<QuestionQuery>()
-            .AddAuthorization()
-            .AddHttpRequestInterceptor<HttpRequestInterceptor>();
+            .AddHttpRequestInterceptor<HttpRequestInterceptor>()
+            .ModifyRequestOptions(o => o.IncludeExceptionDetails = true);
 
         return services;
     }

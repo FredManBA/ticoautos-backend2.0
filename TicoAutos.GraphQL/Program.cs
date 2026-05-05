@@ -1,22 +1,14 @@
 using TicoAutos.GraphQL;
 using TicoAutos.GraphQL.Extensions;
 using TicoAutos.Infrastructure;
+using Microsoft.AspNetCore.Diagnostics;
 
-// Entry point for the TicoAutos GraphQL service.
-// This is a standalone ASP.NET Core project separate from the REST API,
-// sharing the same database and JWT authentication system.
 var builder = WebApplication.CreateBuilder(args);
 
-// Infrastructure: registers DbContext, UnitOfWork and repositories
 builder.Services.AddInfrastructure(builder.Configuration);
-
-// JWT Authentication — same secret/issuer/audience as TicoAutos.WebApi
 builder.Services.AddJwtAuthentication(builder.Configuration);
-
-// HotChocolate GraphQL server with all query types
 builder.Services.AddGraphQlServer();
 
-// CORS for Angular dev client
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularDev", policy =>
@@ -29,11 +21,27 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"MIDDLEWARE ERROR: {ex.Message}");
+        Console.WriteLine(ex.StackTrace);
+        throw;
+    }
+});
+
 app.UseCors("AllowAngularDev");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// GraphQL endpoint — accessible at /graphql
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+
 app.MapGraphQL();
 
 app.Run();

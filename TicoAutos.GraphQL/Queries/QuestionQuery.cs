@@ -1,19 +1,12 @@
-using Microsoft.EntityFrameworkCore;
+using HotChocolate;
 using TicoAutos.Domain.Interfaces;
 using TicoAutos.GraphQL.Types;
 
 namespace TicoAutos.GraphQL.Queries;
 
-/// <summary>
-/// GraphQL queries for Question entity.
-/// Uses IUnitOfWork following Clean Architecture — no direct DbContext access.
-/// </summary>
 [QueryType]
 public class QuestionQuery
 {
-    /// <summary>
-    /// Returns all questions for a specific vehicle including their answers.
-    /// </summary>
     public async Task<IReadOnlyList<QuestionType>> GetQuestionsByVehicle(
         [Service] IUnitOfWork unitOfWork,
         int vehicleId)
@@ -38,15 +31,17 @@ public class QuestionQuery
         }).ToList();
     }
 
-    /// <summary>
-    /// Returns questions asked by the authenticated user.
-    /// Requires a valid JWT token.
-    /// </summary>
-    [HotChocolate.Authorization.Authorize]
     public async Task<IReadOnlyList<QuestionType>> GetMyQuestions(
         [Service] IUnitOfWork unitOfWork,
         [GlobalState("userId")] int userId)
     {
+        if (userId == 0)
+            throw new GraphQLException(
+                ErrorBuilder.New()
+                    .SetMessage("Debe iniciar sesión para ver sus preguntas.")
+                    .SetCode("UNAUTHENTICATED")
+                    .Build());
+
         var questions = await unitOfWork.Questions
             .GetByAskerIdAsync(userId);
 
@@ -64,3 +59,6 @@ public class QuestionQuery
                 Content = q.Answer.Content,
                 CreatedAt = q.Answer.CreatedAt
             }
+        }).ToList();
+    }
+}
